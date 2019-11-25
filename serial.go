@@ -37,6 +37,7 @@ package serial
 /*
 #cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
 #cgo darwin LDFLAGS: -framework IOKit -framework CoreFoundation
+#cgo linux LDFLAGS: -lserialport
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -744,6 +745,21 @@ func (p *Port) SetRTS(rts int) error {
 		return err
 	}
 	return p.getConf()
+}
+
+// Set break signal for a certain time (using sleep)
+func (p *Port) SetBreak(msecs time.Duration) error {
+	if err := errmsg(C.sp_start_break(p.p)); err != nil {
+		return err
+	}
+
+	// pause for msecs
+	time.Sleep(msecs * time.Millisecond)
+
+	if err := errmsg(C.sp_end_break(p.p)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func c2rts(rts C.enum_sp_rts) int {
